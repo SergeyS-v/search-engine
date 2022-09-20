@@ -1,0 +1,50 @@
+#--- AppProperties ----
+app-properties:
+  sites:
+    -
+      url: https://koartgalry.com/
+      name: failed_site
+    -
+      url: https://nikoartgallery.com/
+      name: nikoartgallery
+    -
+      url: http://www.playback.ru/
+      name: playback
+  connectionTimeout: 1000
+  maxConnectionAttempt: 10
+  criticalDelayInIterationsToLog: 4
+  pageQueueInsertSize: 30
+  pageQuantityCoefficientToOptimizeLemmas: 0.7
+  minPageQuantityToOptimizeLemmas: 10
+  wordsInSnippet: 20
+  stringPartsInSnippet: 5
+  titleWeight: 1
+  bodyWeight: 0.8
+  wordInfoToExcept: СОЮЗ,МЕЖД,ПРЕДЛ,МС,ЧАСТ
+  notIndexedPagesCodes: 204,
+                        400, 401, 403, 404, 405, 406, 407, 408, 409, 410, 411, 412, 413, 414, 415, 416, 417, 418, 419, 421, 422, 423, 424, 425, 426, 428, 429, 431, 449, 451, 499,
+                        500, 501, 502, 503, 504, 505, 506, 507, 508, 509, 510, 511, 520, 521, 522, 523, 524, 525, 526
+  userAgent: GSearchBot
+  referrer: http://www.google.com
+  domainNotFilesList: ru, com, pro, html, php
+  onlyQueryMode: true
+
+#--- Api ----
+SearchEngineController.apiPath: /admin
+SearchEngineController.defaultResponseLimit: 10
+
+#--- MySQL ----
+#spring.datasource.driverClassName = com.mysql.jdbc.Driver
+spring.datasource.url: jdbc:mysql://server172.hosting.reg.ru:3306/u1537420_search_engine
+spring.datasource.username: u1537420_user
+spring.datasource.password: B43-8BS-RmL-SUD
+
+#Log JdbcTemplate
+logging.level.org.springframework.jdbc.core.JdbcTemplate: WARN
+logging.level.org.springframework.jdbc.core.StatementCreatorUtils: DEBUG
+
+spring.jpa.properties.hibernate.jdbc.lob.non_contextual_creation: true
+
+### Optimization
+spring.datasource.hikari.data-source-properties.useConfigs: maxPerformance
+spring.datasource.hikari.data-source-properties.rewriteBatchedStatements: true

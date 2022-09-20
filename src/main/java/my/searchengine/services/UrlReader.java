@@ -1,0 +1,202 @@
+package my.searchengine.services;
+
+import my.searchengine.AppProp;
+import my.searchengine.dao.DaoController;
+import my.searchengine.model.Page;
+import my.searchengine.model.Site;
+import my.searchengine.model.URL;
+import my.searchengine.services.checkers.UrlChecker;
+import org.jsoup.HttpStatusException;
+import org.jsoup.Jsoup;
+import org.jsoup.nodes.Document;
+import org.jsoup.select.Elements;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Service;
+
+import java.io.IOException;
+import java.net.SocketTimeoutException;
+import java.net.UnknownHostException;
+import java.util.*;
+import java.util.concurrent.*;
+import java.util.concurrent.atomic.AtomicBoolean;
+
+@Service
+public class UrlReader {
+    @Autowired
+    PagesController pagesController;
+    @Autowired
+    UrlChecker urlChecker;
+    @Autowired
+    AppProp appProp;
+    @Autowired
+    Lemmatizer lemmatizer;
+    @Autowired
+    DaoController daoController;
+
+    public static final AtomicBoolean isIndexing = new AtomicBoolean();
+    public static final ConcurrentHashMap <String, Site.Status> indexingStatusBySiteHost = new ConcurrentHashMap<>();
+    public static final ConcurrentHashMap <String, String> lastErrorForSite = new ConcurrentHashMap<>();
+
+    static final Logger logger = LoggerFactory.getLogger(UrlReader.class);
+
+    private class RecursiveReader extends RecursiveAction {
+        private final URL startURL;
+        private final String host;
+        private final boolean isOnePageIndexing;
+
+        public RecursiveReader(URL url, boolean isOnePageIndexing) {
+            this.startURL = url;
+            this.host = url.getHost();
+            this.isOnePageIndexing = isOnePageIndexing;
+        }
+
+        @Override
+        protected void compute() {
+            getUrlsFromStartUrlAndMakePage().forEach(x -> {
+                if(isIndexing.get() || UrlReader.indexingStatusBySiteHost.get(x.getHost()) == Site.Status.INDEXING) {
+                    ForkJoinPool.commonPool().invoke(new RecursiveReader(x, false).fork());
+                }
+            });
+        }
+
+        public Set<URL> getUrlsFromStartUrlAndMakePage() {
+            Set<URL> urlSet = new HashSet<>();
+            Document jDoc = connectToUrl(startURL.getUrl(), host);
+            if (jDoc == null) {
+                return new HashSet<>();
+            }
+            Page page = Page.createPageFromJDoc(jDoc);
+            if (isOnePageIndexing) {
+                page.setOnlyOnePageForIndexing(true);
+            }
+            Integer responseCode = jDoc.connection().response().statusCode();
+            if(!appProp.getNotIndexedPagesCodes().contains(responseCode)) {
+                page.setTitleLemmas(lemmatizer.getLemmasFromString(jDoc.title()));
+                page.setBodyLemmas(lemmatizer.getLemmasFromString(jDoc.body().text()));
+            }
+            String host = jDoc.connection().response().url().getHost();
+            Site site = new Site(UrlReader.indexingStatusBySiteHost.get(host), host, appProp.getHostToSiteNameMap().get(host));
+            daoController.getSiteDao().insertSite(site);
+            pagesController.addPage(page);
+
+            if (!isOnePageIndexing) {
+                Elements hrefArray = jDoc.getElementsByTag("a");
+                hrefArray.forEach(x -> urlSet.add(new URL(x.attr("abs:href"))));
+
+                urlChecker.markBadUrlInSet(urlSet);
+                pagesController.cleanBadUrls(urlSet);
+                pagesController.cleanDoublesInUrlSet(urlSet);
+            }
+            return urlSet;
+        }
+    }
+
+    private Document connectToUrl(String url, String host) {
+        Document jDoc = null;
+        byte currentIteration = 1;
+        boolean webException = true;
+        do {
+            try {
+                jDoc = Jsoup.connect(url)
+                        .userAgent(appProp.getUserAgent())
+                        .timeout(appProp.getConnectionTimeout() * currentIteration)
+                        .referrer(appProp.getReferrer())
+                        .get();
+                webException = false;
+                if (currentIteration > appProp.getCriticalDelayInIterationsToLog()) {
+                    logger.info("Страница получена с " + currentIteration + " попытки. Ожидание: " + appProp.getConnectionTimeout() * currentIteration + " мс.");
+                }
+            } catch (SocketTimeoutException | HttpStatusException ex) {
+                currentIteration++;
+            } catch (IllegalArgumentException ex) {
+                UrlReader.lastErrorForSite.put(host, "IllegalArgumentException. URL: " + url);
+                logger.error("Задан неверный формат URL. Пример формата: http://www.playback.ru/");
+                return null;
+            } catch (UnknownHostException e) {
+                UrlReader.lastErrorForSite.put(host, "Не удалось соединиться с узлом " + url + " UnknownHostException");
+                logger.error("Не удалось соединиться с узлом " + url + " UnknownHostException", e);
+                e.printStackTrace();
+                return null;
+            } catch (IOException e) {
+                UrlReader.lastErrorForSite.put(host, "Не удалось соединиться с узлом " + url + " IOException");
+                logger.error("Не удалось соединиться с узлом " + url + " IOException", e);
+            } catch (NullPointerException e) {
+                UrlReader.lastErrorForSite.put(host, "Не удалось соединиться с узлом " + url + " NullPointerException");
+                logger.error("Не удалось соединиться с узлом " + url + " NullPointerException", e);
+                e.printStackTrace();
+                return null;
+            }
+        } while (webException && currentIteration <= appProp.getMaxConnectionAttempt());
+
+        if (jDoc == null) {
+            UrlReader.lastErrorForSite.put(host, "Страница не получена. Превышен лимит кол-ва попыток соединения MAX_CONNECTION_ATTEMPT. URL: " + url);
+            logger.warn("Страница не получена. Превышен лимит кол-ва попыток соединения MAX_CONNECTION_ATTEMPT. URL: " + url);
+        }
+        return jDoc;
+    }
+
+    public void startIndexing(String host){
+        logger.info("Параметры приложения. Кол-во сайтов: " + appProp.getSites().size() +
+                    " CONNECTION_TIMEOUT: " + appProp.getConnectionTimeout() +
+                    " PAGE_QUEUE_INSERT_SIZE: " + appProp.getPageQueueInsertSize() +
+                    " urlSiteNameRegex: " + String.join(", ", urlChecker.getUrlSiteNameRegexes()));
+
+        double start = System.currentTimeMillis();
+        if(host.isBlank()) {
+            appProp.getSites().forEach(siteFromAppPropSitesList -> {
+                if (UrlReader.indexingStatusBySiteHost.get(siteFromAppPropSitesList.getHost()) != Site.Status.INDEXING && isIndexing.get()) {
+                    updateStatusForSite(siteFromAppPropSitesList.getHost(), Site.Status.INDEXING);
+                    lastErrorForSite.put(siteFromAppPropSitesList.getHost(), "");
+                    ForkJoinPool.commonPool().invoke(new RecursiveReader(new URL(siteFromAppPropSitesList.getUrl()), false));
+                    if (UrlReader.indexingStatusBySiteHost.get(siteFromAppPropSitesList.getHost()).equals(Site.Status.INDEXING)) {
+                        updateStatusForSite(siteFromAppPropSitesList.getHost(), Site.Status.INDEXED);
+                    }
+                }
+            });
+        } else {
+            lastErrorForSite.put(host, "");
+            ForkJoinPool.commonPool().invoke(new RecursiveReader(new URL(appProp.getHostToSiteUrlMap().get(host)), false));
+            if (UrlReader.indexingStatusBySiteHost.get(host).equals(Site.Status.INDEXING)) {
+                updateStatusForSite(host, Site.Status.INDEXED);
+            }
+        }
+        isIndexing.set(false);
+        pagesController.insertPageQueue();
+        logger.info("Время выполнения индексации " + (System.currentTimeMillis() - start) + " мс.");
+    }
+
+    public void initSiteTable(Site.Status status, String errorMessage){
+        List<AppProp.Sites> failedSites = new LinkedList<>();
+        appProp.getSites().forEach(siteToWork -> {
+            Document jDoc = connectToUrl(siteToWork.getUrl(), siteToWork.getHost());
+            if (jDoc != null) {
+                String host = jDoc.connection().response().url().getHost();
+                Site site = errorMessage.isBlank() ? new Site(status, host, siteToWork.getName()) :
+                        new Site(status, host, siteToWork.getName(), errorMessage);
+                indexingStatusBySiteHost.put(site.getHost(), site.getStatus());
+                daoController.getSiteDao().insertSite(site);
+            } else {
+                String error = "Не удалось соединиться с узлом " + siteToWork.getUrl();
+                logger.error(error);
+                Site site = new Site(Site.Status.FAILED, siteToWork.getUrl(), siteToWork.getName(), error);
+                failedSites.add(siteToWork);
+                daoController.getSiteDao().insertSite(site);
+            }
+        });
+        failedSites.forEach(appProp.getSites()::remove);
+    }
+
+    public void updateStatusForSite(String host, Site.Status status){
+        UrlReader.indexingStatusBySiteHost.put(host, status);
+        if (status == Site.Status.INDEXING) {
+            daoController.clearSiteInfo(host);
+        }
+        daoController.getSiteDao().insertSite(new Site(status, host,"updateStatus"));
+    }
+
+    public void indexOnePage(String url) {
+        ForkJoinPool.commonPool().execute(new RecursiveReader(new URL(url), true));
+    }
+}
