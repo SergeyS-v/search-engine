@@ -27,7 +27,7 @@ app-properties:
   userAgent: GSearchBot
   referrer: http://www.google.com
   domainNotFilesList: ru, com, pro, html, php
-  onlyQueryMode: true
+  onlyQueryMode: false
 
 #--- Api ----
 SearchEngineController.apiPath: /admin
