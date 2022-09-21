@@ -17,10 +17,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.*;
 
-import java.util.Iterator;
-import java.util.Map;
 import java.util.concurrent.ForkJoinPool;
-import java.util.concurrent.TimeUnit;
 
 @Controller
 public class SearchEngineController {
@@ -72,7 +69,7 @@ public class SearchEngineController {
             return ResponseEntity.badRequest().body(new ErrorResponse("Индексация не запущена"));
         } else {
             UrlReader.isIndexing.set(false);
-            UrlReader.indexingStatusBySiteHost.forEach((host,status) -> { // TODO: 07.09.2022 Ошибка проиндексированному сайту не должна выставляться
+            UrlReader.indexingStatusBySiteHost.forEach((host,status) -> {
                 if (status == Site.Status.INDEXING) {
                     UrlReader.indexingStatusBySiteHost.put(host, Site.Status.FAILED);
                     daoController.getSiteDao().insertSite(new Site(Site.Status.FAILED, host, "updateStatus", "Indexing stopped by user"));
@@ -121,23 +118,17 @@ public class SearchEngineController {
        Integer siteId = host.matches("default") ? null : daoController.getSiteDao().getSiteIdByHost(host);
        Query newQuery = new Query(query, siteId);
        QueryResult queryResult = queryController.getQueryQueryResultMap().get(newQuery);
-       if (queryResult != null && (newQuery.getQueryTime() - queryResult.getQueryTime() < TIME_THRESHOLD)) { // TODO: 12.09.2022 Подумать над условием
+       if (queryResult != null && (newQuery.getQueryTime() - queryResult.getQueryTime() < TIME_THRESHOLD)) { // Условное условия для данной задачи
            return RequestResponse.makeRequestResponse(queryResult, daoController.getPageDao(), appProp, offset, limit);
        } else {
            queryResult = queryController.performNewQuery(newQuery);
            queryController.getQueryQueryResultMap().put(newQuery, queryResult);
        }
-        // TODO: 12.09.2022  Подумать как чистить queryController в отдельном потоке;
+
         ForkJoinPool.commonPool().execute(new Runnable() {
             @Override
             public void run() {
-                Iterator<Map.Entry<Query, QueryResult>> queryIterator = queryController.getQueryQueryResultMap().entrySet().iterator();
-                while (queryIterator.hasNext()) {
-                    Map.Entry<Query, QueryResult> entry = queryIterator.next();
-                    if(System.currentTimeMillis() - entry.getValue().getQueryTime() > TIME_THRESHOLD) {
-                        queryIterator.remove();
-                    }
-                }
+                queryController.getQueryQueryResultMap().entrySet().removeIf(entry -> System.currentTimeMillis() - entry.getValue().getQueryTime() > TIME_THRESHOLD);
             }
         });
        return RequestResponse.makeRequestResponse(queryResult, daoController.getPageDao(), appProp, offset, limit);

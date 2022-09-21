@@ -8,7 +8,7 @@ public class Lemma {
     private int frequency;
     private int siteId;
 
-    public Lemma(){};
+    public Lemma(){}
     public Lemma(String lemma, int frequency) {
         this.lemma = lemma;
         this.frequency = frequency;
