@@ -91,7 +91,7 @@ public class SearchEngineController {
             }
             if (appProp.getHostToSiteNameMap().get(host) == null) {
              return new ErrorResponse("Данная страница находится за пределами сайтов, указанных в конфигурационном файле");
-            } else if (urlParts.length > 2) {
+            } else if (urlParts.length > 3) {
                 String path = "/".concat(urlParts[3]);
                 daoController.clearPageInfo(host, path);
                 urlReader.indexOnePage(url);
