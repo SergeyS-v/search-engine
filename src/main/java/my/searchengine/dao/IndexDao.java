@@ -75,12 +75,12 @@ public class IndexDao {
                 }
                 String stmt2 = String.format("SELECT page_id FROM `index` WHERE page_id IN (%s) AND lemma_id = ?",
                         siteIdPageIdListsMap.get(siteId).stream()
-                                .map(x -> x.toString())
+                                .map(Object::toString)
                                 .collect(Collectors.joining(", ")));
                 siteIdPageIdListsMap.put(siteId, jdbcTemplate.queryForList(stmt2, Integer.class, siteIdLemmaListsMap.get(siteId).get(i).getId()));
             }
         });
-        return siteIdPageIdListsMap.values().stream().flatMap(x -> x.stream()).collect(Collectors.toList());
+        return siteIdPageIdListsMap.values().stream().flatMap(Collection::stream).collect(Collectors.toList());
     }
 
     public HashMap<Integer, Float> getLemmasRankForPages(Collection<Integer> pagesIds, Collection<Lemma> lemmas) {

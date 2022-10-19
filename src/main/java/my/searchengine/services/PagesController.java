@@ -32,7 +32,7 @@ public class PagesController {
     }
 
     private synchronized void checkQueueSizeAndInsertPageBatch(int threshold){
-        Map<String, Page> pageMap = new HashMap();
+        Map<String, Page> pageMap = new HashMap<>();
         Page page;
         while ((page = pageQueue.poll()) != null && pageMap.size() < threshold) {
                 pageMap.put(page.getPathWithHostName(), page);
@@ -54,7 +54,7 @@ public class PagesController {
 
     private void countAndUpdateLemmasForPages(Map<String, Page> pageMap) {
         pageMap.values().forEach(pageForLemmas -> {
-            //Апдейтим frequency для лемм, которые есть в базе
+            //Апдэйтим frequency для лемм, которые есть в базе
             pageForLemmas.setSiteId(daoController.getSiteDao().getSiteIdByHost(pageForLemmas.getHostName()));
             HashMap<Lemma, Integer> allLemmasForPage = new HashMap<>();
             pageForLemmas.getBodyLemmas().values().forEach( x -> {

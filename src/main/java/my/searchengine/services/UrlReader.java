@@ -15,6 +15,7 @@ import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
+import javax.annotation.PreDestroy;
 import java.io.IOException;
 import java.net.SocketTimeoutException;
 import java.net.UnknownHostException;
@@ -35,11 +36,18 @@ public class UrlReader {
     @Autowired
     DaoController daoController;
 
+    ForkJoinPool forkJoinPool = new ForkJoinPool(); // TODO: 06.10.2022 Перенести в конструктор
+
     public static final AtomicBoolean isIndexing = new AtomicBoolean();
     public static final ConcurrentHashMap <String, Site.Status> indexingStatusBySiteHost = new ConcurrentHashMap<>();
     public static final ConcurrentHashMap <String, String> lastErrorForSite = new ConcurrentHashMap<>();
 
     static final Logger logger = LoggerFactory.getLogger(UrlReader.class);
+
+    @PreDestroy
+    private void closePool() {
+        forkJoinPool.shutdown();
+    }
 
     private class RecursiveReader extends RecursiveAction {
         private final URL startURL;
@@ -54,11 +62,13 @@ public class UrlReader {
 
         @Override
         protected void compute() {
+            List<ForkJoinTask<Void>> taskList = new LinkedList<>();
             getUrlsFromStartUrlAndMakePage().forEach(x -> {
                 if(isIndexing.get() || UrlReader.indexingStatusBySiteHost.get(x.getHost()) == Site.Status.INDEXING) {
-                    ForkJoinPool.commonPool().invoke(new RecursiveReader(x, false).fork());
+                    taskList.add(new RecursiveReader(x, false).fork());
                 }
             });
+            taskList.forEach(ForkJoinTask::join);
         }
 
         public Set<URL> getUrlsFromStartUrlAndMakePage() {
@@ -149,7 +159,7 @@ public class UrlReader {
                 if (UrlReader.indexingStatusBySiteHost.get(siteFromAppPropSitesList.getHost()) != Site.Status.INDEXING && isIndexing.get()) {
                     updateStatusForSite(siteFromAppPropSitesList.getHost(), Site.Status.INDEXING);
                     lastErrorForSite.put(siteFromAppPropSitesList.getHost(), "");
-                    ForkJoinPool.commonPool().invoke(new RecursiveReader(new URL(siteFromAppPropSitesList.getUrl()), false));
+                    forkJoinPool.invoke(new RecursiveReader(new URL(siteFromAppPropSitesList.getUrl()), false));
                     if (UrlReader.indexingStatusBySiteHost.get(siteFromAppPropSitesList.getHost()).equals(Site.Status.INDEXING)) {
                         updateStatusForSite(siteFromAppPropSitesList.getHost(), Site.Status.INDEXED);
                     }
@@ -157,7 +167,7 @@ public class UrlReader {
             });
         } else {
             lastErrorForSite.put(host, "");
-            ForkJoinPool.commonPool().invoke(new RecursiveReader(new URL(appProp.getHostToSiteUrlMap().get(host)), false));
+            forkJoinPool.invoke(new RecursiveReader(new URL(appProp.getHostToSiteUrlMap().get(host)), false));
             if (UrlReader.indexingStatusBySiteHost.get(host).equals(Site.Status.INDEXING)) {
                 updateStatusForSite(host, Site.Status.INDEXED);
             }
@@ -197,6 +207,6 @@ public class UrlReader {
     }
 
     public void indexOnePage(String url) {
-        ForkJoinPool.commonPool().execute(new RecursiveReader(new URL(url), true));
+        forkJoinPool.execute(new RecursiveReader(new URL(url), true));
     }
 }
