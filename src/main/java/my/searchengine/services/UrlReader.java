@@ -12,37 +12,46 @@ import org.jsoup.nodes.Document;
 import org.jsoup.select.Elements;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 import javax.annotation.PreDestroy;
 import java.io.IOException;
 import java.net.SocketTimeoutException;
 import java.net.UnknownHostException;
-import java.util.*;
-import java.util.concurrent.*;
+import java.util.HashSet;
+import java.util.LinkedList;
+import java.util.List;
+import java.util.Set;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.ForkJoinPool;
+import java.util.concurrent.ForkJoinTask;
+import java.util.concurrent.RecursiveAction;
 import java.util.concurrent.atomic.AtomicBoolean;
 
 @Service
 public class UrlReader {
-    @Autowired
-    PagesController pagesController;
-    @Autowired
-    UrlChecker urlChecker;
-    @Autowired
-    AppProp appProp;
-    @Autowired
-    Lemmatizer lemmatizer;
-    @Autowired
-    DaoController daoController;
 
-    ForkJoinPool forkJoinPool = new ForkJoinPool(); // TODO: 06.10.2022 Перенести в конструктор
+    private final PagesController pagesController;
+    private final UrlChecker urlChecker;
+    private final AppProp appProp;
+    private final Lemmatizer lemmatizer;
+    private final DaoController daoController;
 
+    private final ForkJoinPool forkJoinPool = new ForkJoinPool();
     public static final AtomicBoolean isIndexing = new AtomicBoolean();
     public static final ConcurrentHashMap <String, Site.Status> indexingStatusBySiteHost = new ConcurrentHashMap<>();
     public static final ConcurrentHashMap <String, String> lastErrorForSite = new ConcurrentHashMap<>();
 
-    static final Logger logger = LoggerFactory.getLogger(UrlReader.class);
+    private static final Logger logger = LoggerFactory.getLogger(UrlReader.class);
+
+    public UrlReader(PagesController pagesController, UrlChecker urlChecker, AppProp appProp, Lemmatizer lemmatizer,
+                    DaoController daoController){
+        this.pagesController = pagesController;
+        this.urlChecker = urlChecker;
+        this.appProp = appProp;
+        this.lemmatizer = lemmatizer;
+        this.daoController = daoController;
+    }
 
     @PreDestroy
     private void closePool() {

@@ -27,6 +27,7 @@ public class AppProp {
     private HashSet<Integer> notIndexedPagesCodes;
     private List<String> domainNotFilesList;
     private boolean onlyQueryMode;
+    private int limitForAllLemmasAreTooPopular;
     private final Map<String, String> hostToSiteNameMap = new HashMap<>();
     private final Map<String, String> hostToSiteUrlMap = new HashMap<>();
 
@@ -165,6 +166,12 @@ public class AppProp {
     }
     public boolean isOnlyQueryMode() {
         return onlyQueryMode;
+    }
+    public void setLimitForAllLemmasAreTooPopular(int limitForAllLemmasAreTooPopular) {
+        this.limitForAllLemmasAreTooPopular = limitForAllLemmasAreTooPopular;
+    }
+    public int getLimitForAllLemmasAreTooPopular() {
+        return limitForAllLemmasAreTooPopular;
     }
     public Map<String, String> getHostToSiteNameMap(){
         return this.hostToSiteNameMap;

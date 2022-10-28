@@ -10,7 +10,6 @@ import org.jsoup.Jsoup;
 import org.jsoup.nodes.Document;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 import java.io.File;
@@ -22,15 +21,18 @@ import java.util.stream.Collectors;
 
 @Service
 public class QueryController {
-    @Autowired
-    Lemmatizer lemmatizer;
-    @Autowired
-    DaoController daoController;
-    @Autowired
-    AppProp appProp;
+    private final Lemmatizer lemmatizer;
+    private final DaoController daoController;
+    private final AppProp appProp;
 
     private static final Logger logger = LoggerFactory.getLogger(QueryController.class);
     private final ConcurrentHashMap<Query, QueryResult> queryQueryResultMap = new ConcurrentHashMap<>();
+
+    public QueryController(Lemmatizer lemmatizer, DaoController daoController, AppProp appProp){
+        this.lemmatizer = lemmatizer;
+        this.daoController = daoController;
+        this.appProp = appProp;
+    }
 
     public ConcurrentHashMap<Query, QueryResult> getQueryQueryResultMap() {
         return queryQueryResultMap;
@@ -50,14 +52,14 @@ public class QueryController {
         Integer pageQuantity = daoController.getIndexDao().getPageQuantity();
         if (pageQuantity != null && pageQuantity > appProp.getMinPageQuantityToOptimizeLemmas()) {
             List<Integer> lemmasIdsWithTooManyPages = daoController.getIndexDao().getLemmasIdsWithTooManyPages();
-            if (lemmaListFrequencySorted.stream().allMatch(x -> lemmasIdsWithTooManyPages.contains(x.getId()))) { // TODO: 13.09.2022 Проверить, как отрабатывает запрос
-                lemmaListFrequencySorted = lemmaListFrequencySorted.stream().limit(10).collect(Collectors.toList()); // TODO: 13.09.2022 Задать параметр
+            if (lemmaListFrequencySorted.stream().allMatch(x -> lemmasIdsWithTooManyPages.contains(x.getId()))) {
+                lemmaListFrequencySorted = lemmaListFrequencySorted.stream().limit(appProp.getLimitForAllLemmasAreTooPopular()).collect(Collectors.toList());
             } else {
                 lemmaListFrequencySorted.removeIf(x -> (lemmasIdsWithTooManyPages.contains(x.getId())));
             }
         }
         List<Integer> pagesIdForQuery = daoController.getIndexDao().getPagesIdForLemmaList(lemmaListFrequencySorted);
-        HashMap<Integer, Float> absRelevanceMap = daoController.getIndexDao().getLemmasRankForPages(pagesIdForQuery, lemmaListFrequencySorted); // TODO: 09.09.2022 Проверить как считаются ранги по отдельным сайтам
+        HashMap<Integer, Float> absRelevanceMap = daoController.getIndexDao().getLemmasRankForPages(pagesIdForQuery, lemmaListFrequencySorted);
         Optional<Float> maxRelevanceOpt = absRelevanceMap.values().stream().max(Float::compareTo);
         if (maxRelevanceOpt.isPresent()) {
             HashMap<Integer, Float> relRelevanceMap = new HashMap<>();

@@ -27,6 +27,7 @@ app-properties:
   userAgent: GSearchBot
   referrer: http://www.google.com
   domainNotFilesList: ru, com, pro, html, php
+  limitForAllLemmasAreTooPopular: 10
   onlyQueryMode: false
 
 #--- Api ----
