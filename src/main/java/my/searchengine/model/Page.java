@@ -18,7 +18,6 @@ public class Page {
     private boolean isOnlyOnePageForIndexing;
 
     public Page(){}
-
     public Page(String path, int code, String content, String hostName){
         this.path = path;
         this.code = code;
@@ -102,7 +101,7 @@ public class Page {
         if (this == o) return true;
         if (!(o instanceof Page)) return false;
         Page page = (Page) o;
-        return siteId == page.siteId && Objects.equals(hostName, page.hostName) && Objects.equals(path, page.path); // TODO: 13.07.2022 Убрать сравнение по siteId?
+        return siteId == page.siteId && Objects.equals(hostName, page.hostName) && Objects.equals(path, page.path);
     }
 
     @Override

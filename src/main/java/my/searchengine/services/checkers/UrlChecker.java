@@ -15,16 +15,19 @@ import java.util.stream.Collectors;
 @Service
 public class UrlChecker {
 
-    @Autowired
-    AppProp appProp;
-
-    static final Logger logger = LoggerFactory.getLogger("badUrlLogger");
+    private final AppProp appProp;
+    private static final Logger logger = LoggerFactory.getLogger("badUrlLogger");
 
     //----- Regexes ------
-    public static final String toFilesUrlRegex = ".+\\.\\w{2,4}$"; //Ссылки на файлы для отбраковки. Проверяем по наличию расширения в пути
-    public static String toDomainNotFilesRgx; // = ".+(\\.(ru)|\\.(com)|\\.(pro)|\\.(html)|\\.(php))$";
+    private final String toFilesUrlRegex = ".+\\.\\w{2,4}$"; //Ссылки на файлы для отбраковки. Проверяем по наличию расширения в пути
+    private final String toDomainNotFilesRgx; // = ".+(\\.(ru)|\\.(com)|\\.(pro)|\\.(html)|\\.(php))$";
     public static final String siteNameRegexFull = "http(s)?://(\\w+\\.)?\\w+\\.\\w+(/.*)?"; //Проверка на общий формат представленной к обработке ссылки, которая должна включать протокол и хост
-    private static final Set<String> urlHostNameRegexes = new HashSet<>(); //для проверки ссылок на требуемый хост
+    private final Set<String> urlHostNameRegexes = new HashSet<>(); //для проверки ссылок на требуемый хост
+
+    public UrlChecker(AppProp appProp){
+        this.appProp = appProp;
+        this.toDomainNotFilesRgx = ".+(\\.(" + appProp.getDomainNotFilesList().stream().collect(Collectors.joining(")|\\.(")) + "))$";
+    }
 
     public Set<String> getUrlSiteNameRegexes(){
         return urlHostNameRegexes;
@@ -58,7 +61,5 @@ public class UrlChecker {
                 logger.error("Указанный для индексации url сайта (" + site.getUrl() + ") не соответствует формату.");
             }
         });
-
-        toDomainNotFilesRgx = ".+(\\.(" + appProp.getDomainNotFilesList().stream().collect(Collectors.joining(")|\\.(")) + "))$";
     }
 }

@@ -23,7 +23,7 @@ import java.util.stream.Collectors;
 public class PageDao {
     @Autowired
     JdbcTemplate jdbcTemplate;
-    static final Logger logger = LoggerFactory.getLogger(PageDao.class);
+    private static final Logger logger = LoggerFactory.getLogger(PageDao.class);
 
     public void insertPageBatch(Collection<Page> pagesCollection){
         if (pagesCollection.isEmpty()) {

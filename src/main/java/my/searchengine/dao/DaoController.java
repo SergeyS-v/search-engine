@@ -2,26 +2,27 @@ package my.searchengine.dao;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.stereotype.Repository;
 
 @Repository
 public class DaoController {
-    @Autowired
-    IndexDao indexDao;
-    @Autowired
-    LemmaDao lemmaDao;
-    @Autowired
-    PageDao pageDao;
-    @Autowired
-    SiteDao siteDao;
-    @Autowired
-    StatisticsDao statisticsDao;
-    @Autowired
-    JdbcTemplate jdbcTemplate;
-
+    private final IndexDao indexDao;
+    private final LemmaDao lemmaDao;
+    private final PageDao pageDao;
+    private final SiteDao siteDao;
+    private final StatisticsDao statisticsDao;
+    private final JdbcTemplate jdbcTemplate;
     private static final Logger logger = LoggerFactory.getLogger(DaoController.class);
+
+    public DaoController(IndexDao indexDao, LemmaDao lemmaDao, PageDao pageDao, SiteDao siteDao, StatisticsDao statisticsDao, JdbcTemplate jdbcTemplate) {
+        this.indexDao = indexDao;
+        this.lemmaDao = lemmaDao;
+        this.pageDao = pageDao;
+        this.siteDao = siteDao;
+        this.statisticsDao = statisticsDao;
+        this.jdbcTemplate = jdbcTemplate;
+    }
 
     public IndexDao getIndexDao(){
         return indexDao;

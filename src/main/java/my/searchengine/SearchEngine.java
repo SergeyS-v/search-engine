@@ -10,9 +10,9 @@ import org.springframework.boot.autoconfigure.SpringBootApplication;
 @SpringBootApplication
 public class SearchEngine implements CommandLineRunner {
 
-    final UrlReader urlReader;
-    final DaoController daoController;
-    final AppProp appProp;
+    private final UrlReader urlReader;
+    private final DaoController daoController;
+    private final AppProp appProp;
 
     public SearchEngine(UrlReader urlReader, DaoController daoController, AppProp appProp){
         this.urlReader = urlReader;

@@ -22,12 +22,14 @@ import java.util.stream.Collectors;
 @Repository
 public class IndexDao {
 
-    @Autowired
-    JdbcTemplate jdbcTemplate;
-    @Autowired
-    AppProp appProp;
-
+    private final JdbcTemplate jdbcTemplate;
+    private final AppProp appProp;
     private static final Logger logger = LoggerFactory.getLogger(IndexDao.class);
+
+    public IndexDao(JdbcTemplate jdbcTemplate, AppProp appProp){
+        this.jdbcTemplate = jdbcTemplate;
+        this.appProp = appProp;
+    }
 
     public void insertIndexBatch(Collection<Index> indexCollection){
         ArrayList<Index> indexesList = new ArrayList<>(indexCollection);

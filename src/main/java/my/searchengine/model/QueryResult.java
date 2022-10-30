@@ -4,7 +4,7 @@ import java.util.*;
 
 public class QueryResult {
     private final String query;
-    private long queryTime;
+    private final long queryTime;
     private HashMap<String, Lemma> lemmasHashMap;
     private HashMap<Integer, Float> relPageIdRelevanceMap = new HashMap<>();
     private final Map<Integer, String> pageIdSnippetMap = new HashMap<>();
@@ -34,9 +34,6 @@ public class QueryResult {
     }
     public long getQueryTime(){
         return this.queryTime;
-    }
-    public void setQueryTime(long queryTime) {
-        this.queryTime = queryTime;
     }
     public void addSnippet(Integer pageId, String snippet){
         if (!snippet.isBlank()) {

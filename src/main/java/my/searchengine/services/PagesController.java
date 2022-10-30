@@ -6,7 +6,6 @@ import my.searchengine.model.Index;
 import my.searchengine.model.Lemma;
 import my.searchengine.model.Page;
 import my.searchengine.model.URL;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 import java.util.*;
@@ -16,12 +15,15 @@ import java.util.stream.Collectors;
 @Service
 public class PagesController {
 
-    @Autowired
-    DaoController daoController;
-    @Autowired
-    AppProp appProp;
+    private final DaoController daoController;
+    private final AppProp appProp;
 
     public final Queue<Page> pageQueue = new ConcurrentLinkedQueue<>();
+
+    public PagesController(DaoController daoController, AppProp appProp) {
+        this.daoController = daoController;
+        this.appProp = appProp;
+    }
 
     public void addPage(Page page){
         if (page == null) {

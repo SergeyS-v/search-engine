@@ -7,10 +7,8 @@ import org.apache.lucene.morphology.WrongCharaterException;
 import org.apache.lucene.morphology.russian.RussianLuceneMorphology;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
-import javax.annotation.PostConstruct;
 import java.io.IOException;
 import java.util.Arrays;
 import java.util.HashMap;
@@ -20,22 +18,29 @@ import java.util.stream.Collectors;
 @Service
 public class Lemmatizer {
 
-    @Autowired
-    AppProp appProp;
-    private static LuceneMorphology luceneMorphology;
+    private final AppProp appProp;
+    private final LuceneMorphology luceneMorphology;
+    private final String wordInfoExceptRegex;
     static final Logger logger = LoggerFactory.getLogger("morfError");
-    private String wordInfoExceptRegex;
 
-    @PostConstruct
-    public void setLuceneMorphologyAndInitRegex()  {
-        this.wordInfoExceptRegex = String.format(".+(%s).*",
+    public Lemmatizer(AppProp appProp) {
+        this.appProp = appProp;
+        wordInfoExceptRegex = getWordInfoExceptRegex();
+        this.luceneMorphology = getLuceneMorphology();
+    }
+
+    private String getWordInfoExceptRegex(){
+        return String.format(".+(%s).*",
                 appProp.getWordInfoToExcept().stream()
                         .map(x -> "("+x+")")
                         .collect(Collectors.joining("|")));
+    }
+    private LuceneMorphology getLuceneMorphology()  {
         try {
-            luceneMorphology = new RussianLuceneMorphology();
+            return new RussianLuceneMorphology();
         } catch (IOException e) {
             logger.error("ошибка создания RussianLuceneMorphology", e);
+            return null;
         }
     }
 

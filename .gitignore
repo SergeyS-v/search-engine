@@ -23,6 +23,7 @@
 
 # Package Files #
 *.jar
+!/LuceneMorph_Pack/*.jar
 *.war
 *.nar
 *.ear
