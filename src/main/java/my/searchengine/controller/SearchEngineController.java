@@ -1,5 +1,6 @@
 package my.searchengine.controller;
 
+import lombok.AllArgsConstructor;
 import my.searchengine.AppProp;
 import my.searchengine.controller.responses.ErrorResponse;
 import my.searchengine.controller.responses.RequestResponse;
@@ -12,26 +13,22 @@ import my.searchengine.model.Site;
 import my.searchengine.services.QueryController;
 import my.searchengine.services.UrlReader;
 import my.searchengine.services.checkers.UrlChecker;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.concurrent.ForkJoinPool;
 
+@AllArgsConstructor
 @Controller
 public class SearchEngineController {
 
-    @Autowired
-    DaoController daoController;
-    @Autowired
-    StatisticsResponse statistics;
-    @Autowired
-    UrlReader urlReader;
-    @Autowired
-    AppProp appProp;
-    @Autowired
-    QueryController queryController;
+    private final DaoController daoController;
+    private final StatisticsResponse statistics;
+    private final UrlReader urlReader;
+    private final AppProp appProp;
+    private final QueryController queryController;
+
     private final int TIME_THRESHOLD = 30_000; // Условный порог, для определения источника ответа на запрос
 
     @RequestMapping("${SearchEngineController.apiPath}")

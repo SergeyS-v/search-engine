@@ -1,5 +1,6 @@
 package my.searchengine;
 
+import lombok.AllArgsConstructor;
 import my.searchengine.dao.DaoController;
 import my.searchengine.model.Site;
 import my.searchengine.services.UrlReader;
@@ -7,18 +8,13 @@ import org.springframework.boot.CommandLineRunner;
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
 
+@AllArgsConstructor
 @SpringBootApplication
 public class SearchEngine implements CommandLineRunner {
 
     private final UrlReader urlReader;
     private final DaoController daoController;
     private final AppProp appProp;
-
-    public SearchEngine(UrlReader urlReader, DaoController daoController, AppProp appProp){
-        this.urlReader = urlReader;
-        this.daoController = daoController;
-        this.appProp = appProp;
-    }
 
     public static void main(String[] args) {
         SpringApplication.run(SearchEngine.class, args);

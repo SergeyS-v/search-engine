@@ -1,43 +1,23 @@
 package my.searchengine.model;
 
+import lombok.Getter;
+import lombok.NoArgsConstructor;
+import lombok.Setter;
+
 import java.util.Objects;
 
+@Getter @Setter
+@NoArgsConstructor
 public class Lemma {
     private int id;
     private String lemma;
     private int frequency;
     private int siteId;
 
-    public Lemma(){}
     public Lemma(String lemma, int frequency) {
         this.lemma = lemma;
         this.frequency = frequency;
     }
-    public int getId() {
-        return id;
-    }
-    public void setId(int id) {
-        this.id = id;
-    }
-    public String getLemma() {
-        return lemma;
-    }
-    public void setLemma(String lemma) {
-        this.lemma = lemma;
-    }
-    public int getFrequency() {
-        return frequency;
-    }
-    public void setFrequency(int frequency) {
-        this.frequency = frequency;
-    }
-    public int getSiteId() {
-        return siteId;
-    }
-    public void setSiteId(int siteId) {
-        this.siteId = siteId;
-    }
-
 
     @Override
     public boolean equals(Object o) {

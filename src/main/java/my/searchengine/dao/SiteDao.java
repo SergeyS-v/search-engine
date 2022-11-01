@@ -1,5 +1,6 @@
 package my.searchengine.dao;
 
+import lombok.AllArgsConstructor;
 import my.searchengine.model.Site;
 import my.searchengine.services.UrlReader;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -10,11 +11,11 @@ import org.springframework.stereotype.Repository;
 import java.sql.PreparedStatement;
 import java.sql.SQLException;
 
+@AllArgsConstructor
 @Repository
 public class SiteDao {
 
-    @Autowired
-    JdbcTemplate jdbcTemplate;
+    private final JdbcTemplate jdbcTemplate;
 
     public void insertSite(Site site) {
         String stmt = "INSERT INTO site (status, status_time, last_error, url, name) VALUES (?, ?, ?, ?, ?) ON DUPLICATE KEY UPDATE status = ?, status_time = ?, last_error = ?";

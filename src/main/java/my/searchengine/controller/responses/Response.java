@@ -1,13 +1,10 @@
 package my.searchengine.controller.responses;
 
+import lombok.AllArgsConstructor;
+import lombok.Getter;
+
+@Getter
+@AllArgsConstructor
 public class Response {
     private final Boolean result;
-
-    public Response(Boolean result) {
-        this.result = result;
-    }
-
-    public Boolean getResult() {
-        return result;
-    }
 }

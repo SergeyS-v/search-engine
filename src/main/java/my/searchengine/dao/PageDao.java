@@ -1,10 +1,10 @@
 package my.searchengine.dao;
 
+import lombok.AllArgsConstructor;
 import my.searchengine.model.Page;
 import my.searchengine.model.URL;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.jdbc.core.BatchPreparedStatementSetter;
 import org.springframework.jdbc.core.BeanPropertyRowMapper;
 import org.springframework.jdbc.core.JdbcTemplate;
@@ -19,10 +19,10 @@ import java.util.LinkedList;
 import java.util.List;
 import java.util.stream.Collectors;
 
+@AllArgsConstructor
 @Repository
 public class PageDao {
-    @Autowired
-    JdbcTemplate jdbcTemplate;
+    private final JdbcTemplate jdbcTemplate;
     private static final Logger logger = LoggerFactory.getLogger(PageDao.class);
 
     public void insertPageBatch(Collection<Page> pagesCollection){

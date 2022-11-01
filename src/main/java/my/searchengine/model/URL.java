@@ -1,41 +1,35 @@
 package my.searchengine.model;
 
+import lombok.Getter;
+import lombok.NoArgsConstructor;
+import lombok.Setter;
+
 import java.util.Objects;
 
+@NoArgsConstructor
 public class URL {
+    @Getter
     private String url;
+    @Getter
     private String urlWithoutProtocol;
+    @Getter
     private String host;
+    @Getter @Setter
     private boolean isBad;
 
-    public URL(){}
     public URL(String url) {
         this.url = url.intern();
         this.urlWithoutProtocol = url.replaceFirst(".+://", "");
         String[] urlPathArray = url.split("/");
         this.host = urlPathArray.length < 3 ? null : urlPathArray[2].intern();
     }
-    public String getUrl() {
-        return url;
-    }
+
     public void setUrl(String url) {
         this.url = url;
         this.urlWithoutProtocol = url.replaceFirst(".+://", "");
     }
-    public String getUrlWithoutProtocol() {
-        return this.urlWithoutProtocol;
-    }
     public String getUrlWithoutProtocolAndParameters() {
         return this.urlWithoutProtocol.replaceFirst("\\?.*", "");
-    }
-    public String getHost() {
-        return this.host;
-    }
-    public boolean isBad() {
-        return isBad;
-    }
-    public void setBad(boolean bad) {
-        isBad = bad;
     }
 
     @Override
