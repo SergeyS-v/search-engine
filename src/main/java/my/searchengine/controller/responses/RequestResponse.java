@@ -1,5 +1,8 @@
 package my.searchengine.controller.responses;
 
+import lombok.AllArgsConstructor;
+import lombok.Getter;
+import lombok.Setter;
 import my.searchengine.AppProp;
 import my.searchengine.dao.PageDao;
 import my.searchengine.model.Page;
@@ -8,6 +11,7 @@ import org.jsoup.Jsoup;
 
 import java.util.*;
 
+@Getter @Setter
 public class RequestResponse extends Response {
     private int count;
     private List<SiteResponseInfo> data = new ArrayList<>();
@@ -16,6 +20,8 @@ public class RequestResponse extends Response {
         super(result);
     }
 
+    @Getter
+    @AllArgsConstructor
     private static class SiteResponseInfo {
         private final String site;
         private final String siteName;
@@ -23,50 +29,6 @@ public class RequestResponse extends Response {
         private final String title;
         private final String snippet;
         private final Float relevance;
-
-        protected SiteResponseInfo(String site, String siteName, String uri, String title, String snippet, Float relevance) {
-            this.site = site;
-            this.siteName = siteName;
-            this.uri = uri;
-            this.title = title;
-            this.snippet = snippet;
-            this.relevance = relevance;
-        }
-
-        public String getSite() {
-            return site;
-        }
-        public String getSiteName() {
-            return siteName;
-        }
-        public String getUri() {
-            return uri;
-        }
-        public String getTitle() {
-            return title;
-        }
-        public String getSnippet() {
-            return snippet;
-        }
-        public Float getRelevance() {
-            return relevance;
-        }
-    }
-
-    public int getCount() {
-        return count;
-    }
-    private void setCount(int count) {
-        this.count = count;
-    }
-    public List<SiteResponseInfo> getData(){
-        return data;
-    }
-    public void setData(List<SiteResponseInfo> data) {
-        this.data = data;
-    }
-    private void addData(RequestResponse.SiteResponseInfo data) {
-        this.data.add(data);
     }
 
     public static RequestResponse makeRequestResponse(QueryResult queryResult, PageDao pageDao, AppProp appProp, int offset, int limit) {

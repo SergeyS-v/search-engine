@@ -1,10 +1,14 @@
 package my.searchengine.dao;
 
+import lombok.AllArgsConstructor;
+import lombok.Getter;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.stereotype.Repository;
 
+@AllArgsConstructor
+@Getter
 @Repository
 public class DaoController {
     private final IndexDao indexDao;
@@ -14,31 +18,6 @@ public class DaoController {
     private final StatisticsDao statisticsDao;
     private final JdbcTemplate jdbcTemplate;
     private static final Logger logger = LoggerFactory.getLogger(DaoController.class);
-
-    public DaoController(IndexDao indexDao, LemmaDao lemmaDao, PageDao pageDao, SiteDao siteDao, StatisticsDao statisticsDao, JdbcTemplate jdbcTemplate) {
-        this.indexDao = indexDao;
-        this.lemmaDao = lemmaDao;
-        this.pageDao = pageDao;
-        this.siteDao = siteDao;
-        this.statisticsDao = statisticsDao;
-        this.jdbcTemplate = jdbcTemplate;
-    }
-
-    public IndexDao getIndexDao(){
-        return indexDao;
-    }
-    public LemmaDao getLemmaDao() {
-        return lemmaDao;
-    }
-    public PageDao getPageDao() {
-        return pageDao;
-    }
-    public SiteDao getSiteDao() {
-        return siteDao;
-    }
-    public StatisticsDao getStatisticsDao() {
-        return statisticsDao;
-    }
 
     public void init() {
         try {

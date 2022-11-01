@@ -1,14 +1,21 @@
 package my.searchengine.model;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
+import lombok.AccessLevel;
+import lombok.Getter;
+import lombok.NoArgsConstructor;
+import lombok.Setter;
 
 import java.time.LocalDateTime;
 
+@Getter @Setter
+@NoArgsConstructor(access = AccessLevel.PROTECTED)
 public class Site {
     private int id;
     private Status status;
     private LocalDateTime statusTime;
     private String lastError;
+    @JsonProperty("url")
     private String host;
     private String name;
 
@@ -18,7 +25,6 @@ public class Site {
         FAILED
     }
 
-    public Site(){}
     public Site(Status status, String host, String name){
         this.status = status;
         this.statusTime = LocalDateTime.now();
@@ -31,44 +37,6 @@ public class Site {
         this.statusTime = LocalDateTime.now();
         this.lastError = lastError;
         this.host = host;
-        this.name = name;
-    }
-
-    public int getId() {
-        return id;
-    }
-    public void setId(int id) {
-        this.id = id;
-    }
-    public Status getStatus() {
-        return status;
-    }
-    public void setStatus(Status status) {
-        this.status = status;
-    }
-    public LocalDateTime getStatusTime() {
-        return statusTime;
-    }
-    public void setStatusTime(LocalDateTime statusTime) {
-        this.statusTime = statusTime;
-    }
-    public String getLastError() {
-        return lastError;
-    }
-    public void setLastError(String lastError) {
-        this.lastError = lastError;
-    }
-    @JsonProperty("url")
-    public String getHost() {
-        return host;
-    }
-    public void setHost(String host) {
-        this.host = host;
-    }
-    public String getName() {
-        return name;
-    }
-    public void setName(String name) {
         this.name = name;
     }
 }

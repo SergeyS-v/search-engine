@@ -1,11 +1,11 @@
 package my.searchengine.dao;
 
+import lombok.AllArgsConstructor;
 import my.searchengine.AppProp;
 import my.searchengine.model.Index;
 import my.searchengine.model.Lemma;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.dao.DataAccessException;
 import org.springframework.jdbc.core.BatchPreparedStatementSetter;
 import org.springframework.jdbc.core.JdbcTemplate;
@@ -19,17 +19,13 @@ import java.sql.SQLException;
 import java.util.*;
 import java.util.stream.Collectors;
 
+@AllArgsConstructor
 @Repository
 public class IndexDao {
 
     private final JdbcTemplate jdbcTemplate;
     private final AppProp appProp;
     private static final Logger logger = LoggerFactory.getLogger(IndexDao.class);
-
-    public IndexDao(JdbcTemplate jdbcTemplate, AppProp appProp){
-        this.jdbcTemplate = jdbcTemplate;
-        this.appProp = appProp;
-    }
 
     public void insertIndexBatch(Collection<Index> indexCollection){
         ArrayList<Index> indexesList = new ArrayList<>(indexCollection);
