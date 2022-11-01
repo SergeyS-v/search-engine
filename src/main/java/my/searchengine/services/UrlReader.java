@@ -1,5 +1,6 @@
 package my.searchengine.services;
 
+import lombok.AllArgsConstructor;
 import my.searchengine.AppProp;
 import my.searchengine.dao.DaoController;
 import my.searchengine.model.Page;
@@ -28,6 +29,7 @@ import java.util.concurrent.ForkJoinTask;
 import java.util.concurrent.RecursiveAction;
 import java.util.concurrent.atomic.AtomicBoolean;
 
+@AllArgsConstructor
 @Service
 public class UrlReader {
 
@@ -43,15 +45,6 @@ public class UrlReader {
     public static final ConcurrentHashMap <String, String> lastErrorForSite = new ConcurrentHashMap<>();
 
     private static final Logger logger = LoggerFactory.getLogger(UrlReader.class);
-
-    public UrlReader(PagesController pagesController, UrlChecker urlChecker, AppProp appProp, Lemmatizer lemmatizer,
-                    DaoController daoController){
-        this.pagesController = pagesController;
-        this.urlChecker = urlChecker;
-        this.appProp = appProp;
-        this.lemmatizer = lemmatizer;
-        this.daoController = daoController;
-    }
 
     @PreDestroy
     private void closePool() {

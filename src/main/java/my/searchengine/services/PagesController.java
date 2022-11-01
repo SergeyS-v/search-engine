@@ -1,5 +1,6 @@
 package my.searchengine.services;
 
+import lombok.AllArgsConstructor;
 import my.searchengine.AppProp;
 import my.searchengine.dao.DaoController;
 import my.searchengine.model.Index;
@@ -12,18 +13,13 @@ import java.util.*;
 import java.util.concurrent.ConcurrentLinkedQueue;
 import java.util.stream.Collectors;
 
+@AllArgsConstructor
 @Service
 public class PagesController {
 
     private final DaoController daoController;
     private final AppProp appProp;
-
     public final Queue<Page> pageQueue = new ConcurrentLinkedQueue<>();
-
-    public PagesController(DaoController daoController, AppProp appProp) {
-        this.daoController = daoController;
-        this.appProp = appProp;
-    }
 
     public void addPage(Page page){
         if (page == null) {

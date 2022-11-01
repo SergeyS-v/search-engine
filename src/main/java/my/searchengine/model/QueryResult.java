@@ -1,7 +1,11 @@
 package my.searchengine.model;
 
+import lombok.Getter;
+import lombok.Setter;
+
 import java.util.*;
 
+@Getter @Setter
 public class QueryResult {
     private final String query;
     private final long queryTime;
@@ -14,27 +18,6 @@ public class QueryResult {
         this.queryTime = query.getQueryTime();
     }
 
-    public String getQuery() {
-        return query;
-    }
-    public HashMap<String, Lemma> getLemmasHashMap(){
-        return this.lemmasHashMap;
-    }
-    public void setLemmasHashMap(HashMap<String, Lemma> lemmasHashMap) {
-        this.lemmasHashMap = lemmasHashMap;
-    }
-    public HashMap<Integer, Float> getRelPageIdRelevanceMap() {
-        return this.relPageIdRelevanceMap;
-    }
-    public void setRelPageIdRelevanceMap(HashMap<Integer, Float> relPageIdRelevanceMap) {
-        this.relPageIdRelevanceMap = relPageIdRelevanceMap;
-    }
-    public Map<Integer, String> getPageIdSnippetMap(){
-        return this.pageIdSnippetMap;
-    }
-    public long getQueryTime(){
-        return this.queryTime;
-    }
     public void addSnippet(Integer pageId, String snippet){
         if (!snippet.isBlank()) {
             this.pageIdSnippetMap.put(pageId, snippet);

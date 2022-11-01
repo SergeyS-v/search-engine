@@ -1,10 +1,16 @@
 package my.searchengine.model;
 
+import lombok.AccessLevel;
+import lombok.Getter;
+import lombok.NoArgsConstructor;
+import lombok.Setter;
 import org.jsoup.nodes.Document;
 
 import java.util.HashMap;
 import java.util.Objects;
 
+@Getter @Setter
+@NoArgsConstructor(access = AccessLevel.PROTECTED)
 public class Page {
 
     private int id;
@@ -17,7 +23,6 @@ public class Page {
     private HashMap<String, Lemma> bodyLemmas;
     private boolean isOnlyOnePageForIndexing;
 
-    public Page(){}
     public Page(String path, int code, String content, String hostName){
         this.path = path;
         this.code = code;
@@ -26,60 +31,6 @@ public class Page {
         this.isOnlyOnePageForIndexing = false;
     }
 
-    public void setId(int id) {
-        this.id = id;
-    }
-    public int getId() {
-        return id;
-    }
-    public void setSiteId(int siteId) {
-        this.siteId = siteId;
-    }
-    public int getSiteId() {
-        return siteId;
-    }
-    public void setHostName(String hostName) {
-        this.hostName = hostName;
-    }
-    public String getHostName() {
-        return hostName;
-    }
-    public void setPath(String path) {
-        this.path = path;
-    }
-    public String getPath() {
-        return path;
-    }
-    public void setCode(int code) {
-        this.code = code;
-    }
-    public int getCode() {
-        return code;
-    }
-    public void setContent(String content) {
-        this.content = content;
-    }
-    public String getContent() {
-        return content;
-    }
-    public void setTitleLemmas(HashMap<String, Lemma> titleLemmas) {
-        this.titleLemmas = titleLemmas;
-    }
-    public HashMap<String, Lemma> getTitleLemmas() {
-        return this.titleLemmas;
-    }
-    public void setBodyLemmas(HashMap<String, Lemma> bodyLemmas) {
-        this.bodyLemmas = bodyLemmas;
-    }
-    public HashMap<String, Lemma> getBodyLemmas() {
-        return this.bodyLemmas;
-    }
-    public void setOnlyOnePageForIndexing(boolean onlyOnePageForIndexing) {
-        isOnlyOnePageForIndexing = onlyOnePageForIndexing;
-    }
-    public boolean isOnlyOnePageForIndexing() {
-        return isOnlyOnePageForIndexing;
-    }
     public String getPathWithHostName(){
             return hostName  + path;
     }
@@ -88,7 +39,6 @@ public class Page {
         if (jDoc == null) {
             return null;
         }
-
         String content = jDoc.html();
         int responseCode = jDoc.connection().response().statusCode();
         String url = jDoc.connection().response().url().getPath().matches("") ? "/" : jDoc.connection().response().url().getPath();

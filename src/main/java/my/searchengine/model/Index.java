@@ -1,43 +1,23 @@
 package my.searchengine.model;
 
+import lombok.AccessLevel;
+import lombok.Getter;
+import lombok.NoArgsConstructor;
+import lombok.Setter;
+
 import java.util.Objects;
 
+@Getter @Setter
+@NoArgsConstructor(access = AccessLevel.PROTECTED)
 public class Index {
-
     private int id;
     private int pageId;
     private int lemmaId;
     private float rank;
 
-    public Index(){}
     public Index(int pageId, int lemmaId, float rank){
         this.lemmaId = lemmaId;
         this.pageId = pageId;
-        this.rank = rank;
-    }
-
-    public int getId() {
-        return id;
-    }
-    public void setId(int id) {
-        this.id = id;
-    }
-    public int getPageId() {
-        return pageId;
-    }
-    public void setPageId(int pageId) {
-        this.pageId = pageId;
-    }
-    public int getLemmaId() {
-        return lemmaId;
-    }
-    public void setLemmaId(int lemmaId) {
-        this.lemmaId = lemmaId;
-    }
-    public float getRank() {
-        return rank;
-    }
-    public void setRank(float rank) {
         this.rank = rank;
     }
 

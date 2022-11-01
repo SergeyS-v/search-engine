@@ -1,9 +1,9 @@
 package my.searchengine.dao;
 
+import lombok.AllArgsConstructor;
 import my.searchengine.model.Lemma;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.dao.DataAccessException;
 import org.springframework.jdbc.core.BatchPreparedStatementSetter;
 import org.springframework.jdbc.core.BeanPropertyRowMapper;
@@ -16,11 +16,10 @@ import java.sql.SQLException;
 import java.util.*;
 import java.util.stream.Collectors;
 
+@AllArgsConstructor
 @Repository
 public class LemmaDao {
-    @Autowired
-    JdbcTemplate jdbcTemplate;
-
+    private final JdbcTemplate jdbcTemplate;
     private static final Logger logger = LoggerFactory.getLogger(LemmaDao.class);
 
     public void insertLemmaBatch(Map<Lemma, Integer> lemmasFrequencyMap, Integer siteId){

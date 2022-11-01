@@ -1,5 +1,6 @@
 package my.searchengine.services;
 
+import lombok.AllArgsConstructor;
 import my.searchengine.AppProp;
 import my.searchengine.dao.DaoController;
 import my.searchengine.model.Lemma;
@@ -19,6 +20,7 @@ import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.stream.Collectors;
 
+@AllArgsConstructor
 @Service
 public class QueryController {
     private final Lemmatizer lemmatizer;
@@ -27,12 +29,6 @@ public class QueryController {
 
     private static final Logger logger = LoggerFactory.getLogger(QueryController.class);
     private final ConcurrentHashMap<Query, QueryResult> queryQueryResultMap = new ConcurrentHashMap<>();
-
-    public QueryController(Lemmatizer lemmatizer, DaoController daoController, AppProp appProp){
-        this.lemmatizer = lemmatizer;
-        this.daoController = daoController;
-        this.appProp = appProp;
-    }
 
     public ConcurrentHashMap<Query, QueryResult> getQueryQueryResultMap() {
         return queryQueryResultMap;

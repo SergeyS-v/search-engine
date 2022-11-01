@@ -1,7 +1,11 @@
 package my.searchengine.model;
 
+import lombok.Getter;
+import lombok.Setter;
+
 import java.util.Objects;
 
+@Getter @Setter
 public class Query {
     private String query;
     private Integer siteId;
@@ -11,24 +15,6 @@ public class Query {
         this.query = query;
         this.siteId = siteId;
         this.queryTime = System.currentTimeMillis();
-    }
-    public String getQuery() {
-        return query;
-    }
-    public void setQuery(String query) {
-        this.query = query;
-    }
-    public Integer getSiteId() {
-        return siteId;
-    }
-    public void setSiteId(Integer siteId) {
-        this.siteId = siteId;
-    }
-    public long getQueryTime() {
-        return queryTime;
-    }
-    public void setQueryTime(long queryTime) {
-        this.queryTime = queryTime;
     }
 
     @Override
