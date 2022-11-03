@@ -28,7 +28,7 @@ app-properties:
   referrer: http://www.google.com
   domainNotFilesList: ru, com, pro, html, php
   limitForAllLemmasAreTooPopular: 10
-  onlyQueryMode: false
+  onlyQueryMode: true
 
 #--- Api ----
 SearchEngineController.apiPath: /admin
