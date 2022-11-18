@@ -6,18 +6,32 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
 
+import javax.persistence.*;
 import java.time.LocalDateTime;
+import java.util.LinkedList;
+import java.util.List;
 
 @Getter @Setter
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
+@Entity
+@Table(name = "site")
 public class Site {
+    @Id
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
     private int id;
+    @Enumerated(EnumType.STRING)
     private Status status;
+    @Column(name = "status_time")
     private LocalDateTime statusTime;
+    @Column(name = "last_error")
     private String lastError;
     @JsonProperty("url")
+    @Column(name = "url")
     private String host;
     private String name;
+    //Новое в JPA:
+    @OneToMany(mappedBy = "site")
+    private List<Page> pageList = new LinkedList<>(); // TODO: 18.11.2022 Разобраться как инициировать этот список
 
     public enum Status {
         INDEXING,

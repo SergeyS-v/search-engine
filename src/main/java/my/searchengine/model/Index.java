@@ -5,13 +5,19 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
 
+import javax.persistence.*;
 import java.util.Objects;
 
 @Getter @Setter
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
+@Table(name = "`index`")
 public class Index {
-    private int id;
+//    @Id
+//    @GeneratedValue(strategy = GenerationType.IDENTITY)
+//    private int id;
+    @Column(name = "page_id")
     private int pageId;
+    @Column(name = "lemma_id")
     private int lemmaId;
     private float rank;
 

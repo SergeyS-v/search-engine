@@ -24,9 +24,9 @@ public class DaoController {
             //DROP TABLES
             jdbcTemplate.execute("DROP TABLE IF EXISTS `index`");
             jdbcTemplate.execute("DROP TABLE IF EXISTS page");
+            jdbcTemplate.execute("DROP TABLE IF EXISTS lemma");
             jdbcTemplate.execute("DROP TABLE IF EXISTS site");
             jdbcTemplate.execute("DROP TABLE IF EXISTS field");
-            jdbcTemplate.execute("DROP TABLE IF EXISTS lemma");
 
             // CREATE site TABLE
             jdbcTemplate.execute("CREATE TABLE site (" +
@@ -37,6 +37,7 @@ public class DaoController {
                     "url VARCHAR(255) NOT NULL," +
                     "name VARCHAR(255) NOT NULL," +
                     "UNIQUE INDEX url(url(255)));");
+
             // CREATE page TABLE
             jdbcTemplate.execute("CREATE TABLE page(" +
                     "id INT NOT NULL AUTO_INCREMENT, " +
@@ -63,14 +64,16 @@ public class DaoController {
                     "lemma VARCHAR(255) NOT NULL, " +
                     "site_id INT NOT NULL, " +
                     "frequency INT NOT NULL, " +
-                    "UNIQUE INDEX lemma(site_id, lemma(255)));");
+                    "FOREIGN KEY (site_id) REFERENCES site (id) ON DELETE CASCADE," +
+                    "UNIQUE INDEX lemma(site_id, lemma(255)));"); // TODO: 05.11.2022 Наверное, вместо этого нужно сделать PK составным как id и site_id. А site_id сделать FK
 
             // CREATE index TABLE
             jdbcTemplate.execute("CREATE TABLE `index`(" +
-                    "id INT NOT NULL AUTO_INCREMENT PRIMARY KEY, " +
+//                    "id INT NOT NULL AUTO_INCREMENT PRIMARY KEY, " +
                     "page_id INT NOT NULL, " +
                     "lemma_id INT NOT NULL, " +
-                    "rank FLOAT NOT NULL," +
+                    "rank FLOAT DEFAULT 0," +
+                    "PRIMARY KEY (page_id, lemma_id)," +
                     "FOREIGN KEY (page_id) REFERENCES page (id) ON DELETE CASCADE," +
                     "FOREIGN KEY (lemma_id) REFERENCES lemma (id) ON DELETE CASCADE" +
                     ");");

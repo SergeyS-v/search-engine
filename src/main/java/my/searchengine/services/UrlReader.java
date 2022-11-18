@@ -3,9 +3,10 @@ package my.searchengine.services;
 import lombok.AllArgsConstructor;
 import my.searchengine.AppProp;
 import my.searchengine.dao.DaoController;
-import my.searchengine.model.Page;
-import my.searchengine.model.Site;
-import my.searchengine.model.URL;
+import my.searchengine.model.*;
+import my.searchengine.repositories.LemmaRepository;
+import my.searchengine.repositories.PageRepository;
+import my.searchengine.repositories.SiteRepository;
 import my.searchengine.services.checkers.UrlChecker;
 import org.jsoup.HttpStatusException;
 import org.jsoup.Jsoup;
@@ -16,6 +17,7 @@ import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
 
 import javax.annotation.PreDestroy;
+import javax.transaction.Transactional;
 import java.io.IOException;
 import java.net.SocketTimeoutException;
 import java.net.UnknownHostException;
@@ -38,6 +40,10 @@ public class UrlReader {
     private final AppProp appProp;
     private final Lemmatizer lemmatizer;
     private final DaoController daoController;
+
+    private final SiteRepository siteRepository;
+    private final LemmaRepository lemmaRepository;
+    private final PageRepository pageRepository;
 
     private final ForkJoinPool forkJoinPool = new ForkJoinPool();
     public static final AtomicBoolean isIndexing = new AtomicBoolean();
@@ -210,5 +216,23 @@ public class UrlReader {
 
     public void indexOnePage(String url) {
         forkJoinPool.execute(new RecursiveReader(new URL(url), true));
+    }
+
+    @Transactional
+    public void testJpa(){
+        Site site = new Site(Site.Status.INDEXING, "hostTest", "nameTest");
+        Page page = new Page("test_path", 100, "test_content", "test_hostname");
+        site.getPageList().add(page);
+        page.setSite(site);
+
+        Lemma lemma = new Lemma("test", 100);
+        lemma.setSite(site);
+        page.getLemmaList().add(lemma);
+        lemma.getPageList().add(page);
+
+
+        siteRepository.save(site);
+        pageRepository.save(page);
+        lemmaRepository.save(lemma);
     }
 }

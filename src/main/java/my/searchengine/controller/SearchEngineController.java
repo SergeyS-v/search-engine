@@ -130,4 +130,11 @@ public class SearchEngineController {
         });
        return RequestResponse.makeRequestResponse(queryResult, daoController.getPageDao(), appProp, offset, limit);
     }
+
+//    @RequestMapping("/test")
+//    @ResponseBody
+//    public ResponseEntity testJpa(){
+//        urlReader.testJpa();
+//        return ResponseEntity.ok().build();
+//    }
 }
