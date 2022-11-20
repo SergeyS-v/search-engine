@@ -24,9 +24,8 @@ public class SearchEngine implements CommandLineRunner {
     public void run(String... args) throws Exception {
         if(!appProp.isOnlyQueryMode()) {
             daoController.init();
-            //urlReader.initSiteTable(Site.Status.FAILED, "Indexing not started");
-            urlReader.testJpa();
-
+            urlReader.initSiteTable(Site.Status.FAILED, "Indexing not started");
+//            urlReader.testJpa();
         }
     }
 }

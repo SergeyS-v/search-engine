@@ -15,9 +15,9 @@ import org.jsoup.select.Elements;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import javax.annotation.PreDestroy;
-import javax.transaction.Transactional;
 import java.io.IOException;
 import java.net.SocketTimeoutException;
 import java.net.UnknownHostException;
@@ -33,6 +33,7 @@ import java.util.concurrent.atomic.AtomicBoolean;
 
 @AllArgsConstructor
 @Service
+@org.springframework.transaction.annotation.Transactional(readOnly = true)
 public class UrlReader {
 
     private final PagesController pagesController;
@@ -185,6 +186,7 @@ public class UrlReader {
         logger.info("Время выполнения индексации " + (System.currentTimeMillis() - start) + " мс.");
     }
 
+    @org.springframework.transaction.annotation.Transactional
     public void initSiteTable(Site.Status status, String errorMessage){
         List<AppProp.Sites> failedSites = new LinkedList<>();
         appProp.getSites().forEach(siteToWork -> {
@@ -194,13 +196,15 @@ public class UrlReader {
                 Site site = errorMessage.isBlank() ? new Site(status, host, siteToWork.getName()) :
                         new Site(status, host, siteToWork.getName(), errorMessage);
                 indexingStatusBySiteHost.put(site.getHost(), site.getStatus());
-                daoController.getSiteDao().insertSite(site);
+//                daoController.getSiteDao().insertSite(site);
+                siteRepository.save(site);
             } else {
                 String error = "Не удалось соединиться с узлом " + siteToWork.getUrl();
                 logger.error(error);
                 Site site = new Site(Site.Status.FAILED, siteToWork.getUrl(), siteToWork.getName(), error);
                 failedSites.add(siteToWork);
-                daoController.getSiteDao().insertSite(site);
+//                daoController.getSiteDao().insertSite(site);
+                siteRepository.save(site);
             }
         });
         failedSites.forEach(appProp.getSites()::remove);
