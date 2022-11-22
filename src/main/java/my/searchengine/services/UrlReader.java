@@ -33,7 +33,6 @@ import java.util.concurrent.atomic.AtomicBoolean;
 
 @AllArgsConstructor
 @Service
-@org.springframework.transaction.annotation.Transactional(readOnly = true)
 public class UrlReader {
 
     private final PagesController pagesController;
@@ -49,6 +48,7 @@ public class UrlReader {
     private final ForkJoinPool forkJoinPool = new ForkJoinPool();
     public static final AtomicBoolean isIndexing = new AtomicBoolean();
     public static final ConcurrentHashMap <String, Site.Status> indexingStatusBySiteHost = new ConcurrentHashMap<>();
+    public static final ConcurrentHashMap <String, Site> siteToWorkMap = new ConcurrentHashMap<>(); // TODO: 22.11.2022 Точно ли нужно конкарент? Точно ли нужно Map?
     public static final ConcurrentHashMap <String, String> lastErrorForSite = new ConcurrentHashMap<>();
 
     private static final Logger logger = LoggerFactory.getLogger(UrlReader.class);
@@ -155,8 +155,8 @@ public class UrlReader {
         }
         return jDoc;
     }
-
-    public void startIndexing(String host){
+    @Transactional
+    public void startIndexing(String host){ // TODO: 22.11.2022 Проверять
         logger.info("Параметры приложения. Кол-во сайтов: " + appProp.getSites().size() +
                     " CONNECTION_TIMEOUT: " + appProp.getConnectionTimeout() +
                     " PAGE_QUEUE_INSERT_SIZE: " + appProp.getPageQueueInsertSize() +
@@ -164,21 +164,25 @@ public class UrlReader {
 
         double start = System.currentTimeMillis();
         if(host.isBlank()) {
-            appProp.getSites().forEach(siteFromAppPropSitesList -> {
-                if (UrlReader.indexingStatusBySiteHost.get(siteFromAppPropSitesList.getHost()) != Site.Status.INDEXING && isIndexing.get()) {
-                    updateStatusForSite(siteFromAppPropSitesList.getHost(), Site.Status.INDEXING);
-                    lastErrorForSite.put(siteFromAppPropSitesList.getHost(), "");
-                    forkJoinPool.invoke(new RecursiveReader(new URL(siteFromAppPropSitesList.getUrl()), false));
-                    if (UrlReader.indexingStatusBySiteHost.get(siteFromAppPropSitesList.getHost()).equals(Site.Status.INDEXING)) {
-                        updateStatusForSite(siteFromAppPropSitesList.getHost(), Site.Status.INDEXED);
+            siteToWorkMap.values().forEach(siteToWork -> {
+          //  appProp.getSites().forEach(siteFromAppPropSitesList -> {
+                if (siteToWork.getStatus() != Site.Status.INDEXING && isIndexing.get()) {
+                    updateStatusForSite(siteToWork, Site.Status.INDEXING); // TODO: 21.11.2022 Проверяю этот метод
+//                    lastErrorForSite.put(siteToWork.getHost(), "");
+//                    siteToWork.setLastError("");
+                    forkJoinPool.invoke(new RecursiveReader(new URL(appProp.getHostToSiteUrlMap().get(siteToWork.getHost())), false));
+                    if (siteToWork.getStatus().equals(Site.Status.INDEXING)) {
+                        siteToWork.setStatus(Site.Status.INDEXED);
                     }
                 }
             });
         } else {
-            lastErrorForSite.put(host, "");
+            Site siteToWork = siteToWorkMap.get(host);
+//            siteToWork.setLastError("");
+           // lastErrorForSite.put(host, "");
             forkJoinPool.invoke(new RecursiveReader(new URL(appProp.getHostToSiteUrlMap().get(host)), false));
-            if (UrlReader.indexingStatusBySiteHost.get(host).equals(Site.Status.INDEXING)) {
-                updateStatusForSite(host, Site.Status.INDEXED);
+            if (siteToWork.getStatus().equals(Site.Status.INDEXING)) {
+                siteToWork.setStatus(Site.Status.INDEXED);
             }
         }
         isIndexing.set(false);
@@ -188,7 +192,7 @@ public class UrlReader {
 
     @org.springframework.transaction.annotation.Transactional
     public void initSiteTable(Site.Status status, String errorMessage){
-        List<AppProp.Sites> failedSites = new LinkedList<>();
+        List<AppProp.Sites> failedSites = new LinkedList<>(); // TODO: 22.11.2022 Убираем?
         appProp.getSites().forEach(siteToWork -> {
             Document jDoc = connectToUrl(siteToWork.getUrl(), siteToWork.getHost());
             if (jDoc != null) {
@@ -196,26 +200,31 @@ public class UrlReader {
                 Site site = errorMessage.isBlank() ? new Site(status, host, siteToWork.getName()) :
                         new Site(status, host, siteToWork.getName(), errorMessage);
                 indexingStatusBySiteHost.put(site.getHost(), site.getStatus());
+                siteToWorkMap.put(site.getHost(), site);
 //                daoController.getSiteDao().insertSite(site);
                 siteRepository.save(site);
             } else {
                 String error = "Не удалось соединиться с узлом " + siteToWork.getUrl();
                 logger.error(error);
                 Site site = new Site(Site.Status.FAILED, siteToWork.getUrl(), siteToWork.getName(), error);
-                failedSites.add(siteToWork);
+                failedSites.add(siteToWork); // TODO: 22.11.2022 Убираем?
 //                daoController.getSiteDao().insertSite(site);
                 siteRepository.save(site);
             }
         });
-        failedSites.forEach(appProp.getSites()::remove);
+        failedSites.forEach(appProp.getSites()::remove); // TODO: 22.11.2022 Нужно ли это делать, после того, как я положил работающие сайты в отдельную мапу
     }
 
-    public void updateStatusForSite(String host, Site.Status status){
-        UrlReader.indexingStatusBySiteHost.put(host, status);
+    @Transactional
+    public void updateStatusForSite(Site site, Site.Status status){
+        UrlReader.indexingStatusBySiteHost.put(site.getHost(), status);
         if (status == Site.Status.INDEXING) {
-            daoController.clearSiteInfo(host);
+//            daoController.clearSiteInfo(host);
+            site.getPageList().clear();
+            site.getLemmaList().clear();
         }
-        daoController.getSiteDao().insertSite(new Site(status, host,"updateStatus"));
+            site.setStatus(status);
+     //   daoController.getSiteDao().insertSite(new Site(status, host,"updateStatus"));
     }
 
     public void indexOnePage(String url) {

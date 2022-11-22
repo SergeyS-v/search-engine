@@ -32,6 +32,8 @@ public class Site {
     //Новое в JPA:
     @OneToMany(mappedBy = "site")
     private List<Page> pageList = new LinkedList<>(); // TODO: 18.11.2022 Разобраться как инициировать этот список
+    @OneToMany(mappedBy = "site")
+    private List<Lemma> lemmaList = new LinkedList<>(); // TODO: 18.11.2022 Разобраться как инициировать этот список
 
     public enum Status {
         INDEXING,

@@ -38,7 +38,8 @@ public class AppProp {
     public static class Sites {
         private String url;
         private String name;
-        private String host;
+        private String host; // TODO: 22.11.2022 Подумать над более очевидным заполнение этого поля 
+
         @Override
         public boolean equals(Object o) {
             if (this == o) return true;
