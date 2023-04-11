@@ -18,9 +18,13 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import javax.annotation.PreDestroy;
+import javax.net.ssl.*;
 import java.io.IOException;
 import java.net.SocketTimeoutException;
 import java.net.UnknownHostException;
+import java.security.SecureRandom;
+import java.security.cert.CertificateException;
+import java.security.cert.X509Certificate;
 import java.util.HashSet;
 import java.util.LinkedList;
 import java.util.List;
@@ -47,9 +51,9 @@ public class UrlReader {
 
     private final ForkJoinPool forkJoinPool = new ForkJoinPool();
     public static final AtomicBoolean isIndexing = new AtomicBoolean();
-    public static final ConcurrentHashMap <String, Site.Status> indexingStatusBySiteHost = new ConcurrentHashMap<>();
-    public static final ConcurrentHashMap <String, Site> siteToWorkMap = new ConcurrentHashMap<>(); // TODO: 22.11.2022 Точно ли нужно конкарент? Точно ли нужно Map?
-    public static final ConcurrentHashMap <String, String> lastErrorForSite = new ConcurrentHashMap<>();
+    public static final ConcurrentHashMap<String, Site.Status> indexingStatusBySiteHost = new ConcurrentHashMap<>();
+    public static final ConcurrentHashMap<String, Site> siteToWorkMap = new ConcurrentHashMap<>(); // TODO: 22.11.2022 Точно ли нужно конкарент? Точно ли нужно Map?
+    public static final ConcurrentHashMap<String, String> lastErrorForSite = new ConcurrentHashMap<>();
 
     private static final Logger logger = LoggerFactory.getLogger(UrlReader.class);
 
@@ -73,7 +77,7 @@ public class UrlReader {
         protected void compute() {
             List<ForkJoinTask<Void>> taskList = new LinkedList<>();
             getUrlsFromStartUrlAndMakePage().forEach(x -> {
-                if(isIndexing.get() || UrlReader.indexingStatusBySiteHost.get(x.getHost()) == Site.Status.INDEXING) {
+                if (isIndexing.get() || UrlReader.indexingStatusBySiteHost.get(x.getHost()) == Site.Status.INDEXING) {
                     taskList.add(new RecursiveReader(x, false).fork());
                 }
             });
@@ -91,7 +95,7 @@ public class UrlReader {
                 page.setOnlyOnePageForIndexing(true);
             }
             Integer responseCode = jDoc.connection().response().statusCode();
-            if(!appProp.getNotIndexedPagesCodes().contains(responseCode)) {
+            if (!appProp.getNotIndexedPagesCodes().contains(responseCode)) {
                 page.setTitleLemmas(lemmatizer.getLemmasFromString(jDoc.title()));
                 page.setBodyLemmas(lemmatizer.getLemmasFromString(jDoc.body().text()));
             }
@@ -155,17 +159,18 @@ public class UrlReader {
         }
         return jDoc;
     }
+
     @Transactional
-    public void startIndexing(String host){ // TODO: 22.11.2022 Проверять
+    public void startIndexing(String host) { // TODO: 22.11.2022 Проверять
         logger.info("Параметры приложения. Кол-во сайтов: " + appProp.getSites().size() +
-                    " CONNECTION_TIMEOUT: " + appProp.getConnectionTimeout() +
-                    " PAGE_QUEUE_INSERT_SIZE: " + appProp.getPageQueueInsertSize() +
-                    " urlSiteNameRegex: " + String.join(", ", urlChecker.getUrlSiteNameRegexes()));
+                " CONNECTION_TIMEOUT: " + appProp.getConnectionTimeout() +
+                " PAGE_QUEUE_INSERT_SIZE: " + appProp.getPageQueueInsertSize() +
+                " urlSiteNameRegex: " + String.join(", ", urlChecker.getUrlSiteNameRegexes()));
 
         double start = System.currentTimeMillis();
-        if(host.isBlank()) {
+        if (host.isBlank()) {
             siteToWorkMap.values().forEach(siteToWork -> {
-          //  appProp.getSites().forEach(siteFromAppPropSitesList -> {
+                //  appProp.getSites().forEach(siteFromAppPropSitesList -> {
                 if (siteToWork.getStatus() != Site.Status.INDEXING && isIndexing.get()) {
                     updateStatusForSite(siteToWork, Site.Status.INDEXING); // TODO: 21.11.2022 Проверяю этот метод
 //                    lastErrorForSite.put(siteToWork.getHost(), "");
@@ -179,7 +184,7 @@ public class UrlReader {
         } else {
             Site siteToWork = siteToWorkMap.get(host);
 //            siteToWork.setLastError("");
-           // lastErrorForSite.put(host, "");
+            // lastErrorForSite.put(host, "");
             forkJoinPool.invoke(new RecursiveReader(new URL(appProp.getHostToSiteUrlMap().get(host)), false));
             if (siteToWork.getStatus().equals(Site.Status.INDEXING)) {
                 siteToWork.setStatus(Site.Status.INDEXED);
@@ -191,8 +196,9 @@ public class UrlReader {
     }
 
     @org.springframework.transaction.annotation.Transactional
-    public void initSiteTable(Site.Status status, String errorMessage){
+    public void initSiteTable(Site.Status status, String errorMessage) {
         List<AppProp.Sites> failedSites = new LinkedList<>(); // TODO: 22.11.2022 Убираем?
+        trustEveryone();
         appProp.getSites().forEach(siteToWork -> {
             Document jDoc = connectToUrl(siteToWork.getUrl(), siteToWork.getHost());
             if (jDoc != null) {
@@ -201,14 +207,12 @@ public class UrlReader {
                         new Site(status, host, siteToWork.getName(), errorMessage);
                 indexingStatusBySiteHost.put(site.getHost(), site.getStatus());
                 siteToWorkMap.put(site.getHost(), site);
-//                daoController.getSiteDao().insertSite(site);
                 siteRepository.save(site);
             } else {
                 String error = "Не удалось соединиться с узлом " + siteToWork.getUrl();
                 logger.error(error);
                 Site site = new Site(Site.Status.FAILED, siteToWork.getUrl(), siteToWork.getName(), error);
                 failedSites.add(siteToWork); // TODO: 22.11.2022 Убираем?
-//                daoController.getSiteDao().insertSite(site);
                 siteRepository.save(site);
             }
         });
@@ -216,15 +220,15 @@ public class UrlReader {
     }
 
     @Transactional
-    public void updateStatusForSite(Site site, Site.Status status){
+    public void updateStatusForSite(Site site, Site.Status status) {
         UrlReader.indexingStatusBySiteHost.put(site.getHost(), status);
         if (status == Site.Status.INDEXING) {
 //            daoController.clearSiteInfo(host);
             site.getPageList().clear();
             site.getLemmaList().clear();
         }
-            site.setStatus(status);
-     //   daoController.getSiteDao().insertSite(new Site(status, host,"updateStatus"));
+        site.setStatus(status);
+        //   daoController.getSiteDao().insertSite(new Site(status, host,"updateStatus"));
     }
 
     public void indexOnePage(String url) {
@@ -232,7 +236,7 @@ public class UrlReader {
     }
 
     @Transactional
-    public void testJpa(){
+    public void testJpa() {
         Site site = new Site(Site.Status.INDEXING, "hostTest", "nameTest");
         Page page = new Page("test_path", 100, "test_content", "test_hostname");
         site.getPageList().add(page);
@@ -248,4 +252,31 @@ public class UrlReader {
         pageRepository.save(page);
         lemmaRepository.save(lemma);
     }
+
+    public static void trustEveryone() {
+        try {
+            HttpsURLConnection.setDefaultHostnameVerifier(new HostnameVerifier() {
+                public boolean verify(String hostname, SSLSession session) {
+                    return true;
+                }
+            });
+
+            SSLContext context = SSLContext.getInstance("TLS");
+            context.init(null, new X509TrustManager[]{new X509TrustManager() {
+                public void checkClientTrusted(X509Certificate[] chain, String authType) throws CertificateException {
+                }
+
+                public void checkServerTrusted(X509Certificate[] chain, String authType) throws CertificateException {
+                }
+
+                public X509Certificate[] getAcceptedIssuers() {
+                    return new X509Certificate[0];
+                }
+            }}, new SecureRandom());
+            HttpsURLConnection.setDefaultSSLSocketFactory(context.getSocketFactory());
+        } catch (Exception e) {
+            // e.printStackTrace();
+        }
+    }
+
 }

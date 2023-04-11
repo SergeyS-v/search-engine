@@ -10,6 +10,7 @@ import my.searchengine.dao.DaoController;
 import my.searchengine.model.Query;
 import my.searchengine.model.QueryResult;
 import my.searchengine.model.Site;
+import my.searchengine.repositories.SiteRepository;
 import my.searchengine.services.QueryController;
 import my.searchengine.services.UrlReader;
 import my.searchengine.services.checkers.UrlChecker;
@@ -28,6 +29,7 @@ public class SearchEngineController {
     private final UrlReader urlReader;
     private final AppProp appProp;
     private final QueryController queryController;
+    private final SiteRepository siteRepository;
 
     private final int TIME_THRESHOLD = 30_000; // Условный порог, для определения источника ответа на запрос
 
@@ -94,7 +96,7 @@ public class SearchEngineController {
                 urlReader.indexOnePage(url);
                 return new Response(true);
             } else if (!UrlReader.isIndexing.get() && UrlReader.indexingStatusBySiteHost.get(host) != Site.Status.INDEXING) {
-                urlReader.updateStatusForSite(host, Site.Status.INDEXING);
+                urlReader.updateStatusForSite(siteRepository.findByHostLike(host).stream().findAny().get(), Site.Status.INDEXING); // TODO: 11.04.2023 Сделать проверку на findAny! 
                 if (UrlReader.indexingStatusBySiteHost.values().stream().filter(x -> x != Site.Status.INDEXING).findFirst().isEmpty()) {
                     UrlReader.isIndexing.set(true);
                 }
